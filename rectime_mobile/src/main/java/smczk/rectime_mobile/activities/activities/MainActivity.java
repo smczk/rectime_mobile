@@ -1,12 +1,18 @@
 package smczk.rectime_mobile.activities.activities;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.StrictMode;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.nfc.*;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -32,7 +38,6 @@ public class MainActivity extends ActionBarActivity {
 
     private NfcAdapter mNfcAdapter;
     private RestTemplate restTemplate = new RestTemplate();
-    String url = "https://mysterious-retreat-9693.herokuapp.com/movements";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,19 +125,43 @@ public class MainActivity extends ActionBarActivity {
         }
 
         byte[] rawId = intent.getByteArrayExtra(NfcAdapter.EXTRA_ID);
-        String id = "nothing";
+        //String id = "nothing";
 
-        id = bytesToString(rawId);
-        Toast.makeText(getApplicationContext(), id, Toast.LENGTH_SHORT).show();
+        final String extra_id = bytesToString(rawId);
+        final Integer user_id = 1;
+
+        Toast.makeText(getApplicationContext(), extra_id, Toast.LENGTH_SHORT).show();
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
 
-        if(!isPointRegistered(1,id)) {
-            registerNewPoint(1, id, "どこかしら");
+        if(!isPointRegistered(user_id, extra_id)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Register New point");
+            builder.setMessage("Name");
+            LayoutInflater inflater = (LayoutInflater)this.getSystemService(LAYOUT_INFLATER_SERVICE);
+            final View layout = inflater.inflate(R.layout.point_register,(ViewGroup)findViewById(R.id.edittext));
+            builder.setView(layout);
+
+            builder.setPositiveButton("REGISTER", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    EditText input = (EditText)layout.findViewById(R.id.edittext);
+
+                    if(input.getText().toString() != null) {
+                        registerNewPoint(user_id, extra_id, input.getText().toString());
+                    }
+                }
+            });
+
+            builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialogInterface, int i) {
+
+                }
+            });
+            builder.create().show();
         }
 
-        if(registerNewMovement(1)) {
+        if(registerNewMovement(user_id, extra_id)) {
             Log.d("RestTemplate result", "");
         }
     }
@@ -143,7 +172,7 @@ public class MainActivity extends ActionBarActivity {
         values.add("user_id", user_id.toString());
         values.add("extra_id", extra_id);
 
-        url = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
+        String url = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
 
         Point[] res;
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -170,7 +199,7 @@ public class MainActivity extends ActionBarActivity {
         values.add("extra_id", extra_id);
         values.add("name", name);
 
-        url = getResources().getString(R.string.url) + "/points";
+        String url = getResources().getString(R.string.url) + "/points";
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
         String result = restTemplate.postForObject(url, values, String.class);
@@ -189,12 +218,12 @@ public class MainActivity extends ActionBarActivity {
         return true;
     }
 
-    public boolean registerNewMovement(Integer user_id) {
+    public boolean registerNewMovement(Integer user_id, String extra_id) {
 
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
         values.add("user_id", user_id.toString());
 
-        url = getResources().getString(R.string.url) + "/movements";
+        String url = getResources().getString(R.string.url) + "/movements";
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
         String result = restTemplate.postForObject(url, values, String.class);
