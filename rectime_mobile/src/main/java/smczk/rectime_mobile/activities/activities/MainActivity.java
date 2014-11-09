@@ -20,6 +20,8 @@ import android.content.IntentFilter;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.HttpMethod;
@@ -28,11 +30,13 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import smczk.rectime_mobile.R;
 import smczk.rectime_mobile.activities.models.Movement;
 import smczk.rectime_mobile.activities.models.Point;
+import smczk.rectime_mobile.activities.models.Record;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -47,7 +51,7 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
@@ -135,7 +139,8 @@ public class MainActivity extends ActionBarActivity {
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
 
-        if(!isPointRegistered(user_id, extra_id)) {
+        Point point = isPointRegistered(user_id, extra_id);
+        if(point.id.equals(0)) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Register New point");
             builder.setMessage("Name");
@@ -148,7 +153,9 @@ public class MainActivity extends ActionBarActivity {
                     EditText input = (EditText)layout.findViewById(R.id.edittext);
 
                     if(input.getText().toString() != null) {
-                        registerNewPoint(user_id, extra_id, input.getText().toString());
+                        Point point = registerNewPoint(user_id, extra_id, input.getText().toString());
+                        Movement movement = registerNewMovement(user_id);
+                        Record record = registerNewRecord(point.id, movement.id, "comment");
                     }
                 }
             });
@@ -159,40 +166,69 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
             builder.create().show();
-        }
 
-        if(registerNewMovement(user_id, extra_id)) {
-            Log.d("RestTemplate result", "");
+        }else{
+            Movement movement = latestMovement(user_id);
+            if(movement.id.equals(0)){
+                movement = registerNewMovement(user_id);
+                Record record = registerNewRecord(point.id, movement.id, "comment");
+            }else{
+                Record record = registerNewRecord(point.id, movement.id, "comment");
+                finishMovement(movement.id);
+            }
         }
     }
 
-    public boolean isPointRegistered(Integer user_id, String extra_id) {
-
-        MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
-        values.add("user_id", user_id.toString());
-        values.add("extra_id", extra_id);
+    public Point isPointRegistered(Integer user_id, String extra_id) {
 
         String url = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
-
-        Point[] res;
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        Point[] points = restTemplate.getForObject(url, Point[].class);
 
-        try {
-            ResponseEntity<Point[]> responseEntity = restTemplate.exchange(url, HttpMethod.GET, null, Point[].class);
-            res = responseEntity.getBody();
-
-        } catch (Exception e) {
-            Log.d("Error", e.toString());
-            return false;
+        if(points.length != 0){
+            return points[0];
         }
-
-        if(res.length != 0) {
-            return true;
-        }
-        return false;
+        return new Point();
     }
 
-    public boolean registerNewPoint(Integer user_id, String extra_id, String name) {
+    public Movement latestMovement(Integer user_id) {
+
+        String url = getResources().getString(R.string.url) + "/movements" + "/" + user_id.toString() + "/latest";
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        Movement[] movements = restTemplate.getForObject(url, Movement[].class);
+
+        if(movements.length != 0){
+            return movements[0];
+        }
+        return new Movement();
+    }
+
+    public Movement finishMovement(Integer movement_id) {
+
+        MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
+        values.add("movement_id", movement_id.toString());
+        values.add("completed", "true");
+
+        String url = getResources().getString(R.string.url) + "/movements" + "/" + movement_id.toString();
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        String result = new String();
+        try {
+          result = restTemplate.postForObject(url, values, String.class);
+        } catch(RestClientException e) {
+            e.printStackTrace();
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        Movement movement = null;
+        try {
+            movement = mapper.readValue(result, Movement.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return movement;
+    }
+
+    public Point registerNewPoint(Integer user_id, String extra_id, String name) {
 
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
         values.add("user_id", user_id.toString());
@@ -211,14 +247,10 @@ public class MainActivity extends ActionBarActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        if (point == null) {
-            return false;
-        } 
-        return true;
+        return point;
     }
 
-    public boolean registerNewMovement(Integer user_id, String extra_id) {
+    public Movement registerNewMovement(Integer user_id) {
 
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
         values.add("user_id", user_id.toString());
@@ -235,12 +267,29 @@ public class MainActivity extends ActionBarActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return movement;
+    }
 
-        if (movement == null) {
-            return false;
+    public Record registerNewRecord(Integer point_id, Integer movement_id, String comment) {
+
+        MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
+        values.add("point_id", point_id.toString());
+        values.add("movement_id", movement_id.toString());
+        values.add("comment", comment);
+
+        String url = getResources().getString(R.string.url) + "/records";
+
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        String result = restTemplate.postForObject(url, values, String.class);
+
+        ObjectMapper mapper = new ObjectMapper();
+        Record record = null;
+        try {
+            record = mapper.readValue(result, Record.class);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        return true;
+        return record;
     }
 
     public String bytesToString(byte[] bytes){
