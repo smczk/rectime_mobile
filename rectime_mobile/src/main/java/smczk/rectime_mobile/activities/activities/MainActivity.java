@@ -154,8 +154,14 @@ public class MainActivity extends ActionBarActivity {
 
                     if(input.getText().toString() != null) {
                         Point point = registerNewPoint(user_id, extra_id, input.getText().toString());
-                        Movement movement = registerNewMovement(user_id);
-                        Record record = registerNewRecord(point.id, movement.id, "comment");
+                        Movement movement = latestMovement(user_id);
+                        if(movement.id.equals(0)) {
+                            movement = registerNewMovement(user_id);
+                            Record record = registerNewRecord(point.id, movement.id, "comment");
+                        }else{
+                            Record record = registerNewRecord(point.id, movement.id, "comment");
+                            finishMovement(movement.id);
+                        }
                     }
                 }
             });

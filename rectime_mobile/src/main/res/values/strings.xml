@@ -4,5 +4,6 @@
     <string name="app_name">rectime_mobile</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="url">https://mysterious-retreat-9693.herokuapp.com/api/v1</string>
 
 </resources>
