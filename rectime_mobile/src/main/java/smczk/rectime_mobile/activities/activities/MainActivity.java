@@ -2,6 +2,8 @@ package smczk.rectime_mobile.activities.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.StrictMode;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -20,18 +22,17 @@ import android.content.IntentFilter;
 import android.text.TextUtils;
 
 import java.io.IOException;
-import java.util.List;
+import java.net.URI;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import smczk.rectime_mobile.R;
 import smczk.rectime_mobile.activities.models.Movement;
@@ -42,12 +43,18 @@ public class MainActivity extends ActionBarActivity {
 
     private NfcAdapter mNfcAdapter;
     private RestTemplate restTemplate = new RestTemplate();
+    public static final String PREFERENCES_FILE_NAME = "preference";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-    }
 
+        if(!loginCheck()){
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+        }
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -187,9 +194,11 @@ public class MainActivity extends ActionBarActivity {
 
     public Point isPointRegistered(Integer user_id, String extra_id) {
 
-        String url = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
+        String baseUrl = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
+        URI targetUrl = getUrlWithToken(baseUrl);
+
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        Point[] points = restTemplate.getForObject(url, Point[].class);
+        Point[] points = restTemplate.getForObject(targetUrl, Point[].class);
 
         if(points.length != 0){
             return points[0];
@@ -199,9 +208,11 @@ public class MainActivity extends ActionBarActivity {
 
     public Movement latestMovement(Integer user_id) {
 
-        String url = getResources().getString(R.string.url) + "/movements" + "/" + user_id.toString() + "/latest";
+        String baseUrl = getResources().getString(R.string.url) + "/movements" + "/" + user_id.toString() + "/latest";
+        URI targetUrl = getUrlWithToken(baseUrl);
+
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        Movement[] movements = restTemplate.getForObject(url, Movement[].class);
+        Movement[] movements = restTemplate.getForObject(targetUrl, Movement[].class);
 
         if(movements.length != 0){
             return movements[0];
@@ -215,11 +226,13 @@ public class MainActivity extends ActionBarActivity {
         values.add("movement_id", movement_id.toString());
         values.add("completed", "true");
 
-        String url = getResources().getString(R.string.url) + "/movements" + "/" + movement_id.toString();
+        String baseUrl = getResources().getString(R.string.url) + "/movements" + "/" + movement_id.toString();
+        URI targetUrl = getUrlWithToken(baseUrl);
+
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
         String result = new String();
         try {
-          result = restTemplate.postForObject(url, values, String.class);
+          result = restTemplate.postForObject(targetUrl, values, String.class);
         } catch(RestClientException e) {
             e.printStackTrace();
         }
@@ -241,10 +254,11 @@ public class MainActivity extends ActionBarActivity {
         values.add("extra_id", extra_id);
         values.add("name", name);
 
-        String url = getResources().getString(R.string.url) + "/points";
+        String baseUrl = getResources().getString(R.string.url) + "/points";
+        URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        String result = restTemplate.postForObject(url, values, String.class);
+        String result = restTemplate.postForObject(targetUrl, values, String.class);
 
         ObjectMapper mapper = new ObjectMapper();
         Point point = null;
@@ -261,10 +275,11 @@ public class MainActivity extends ActionBarActivity {
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
         values.add("user_id", user_id.toString());
 
-        String url = getResources().getString(R.string.url) + "/movements";
+        String baseUrl = getResources().getString(R.string.url) + "/movements";
+        URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        String result = restTemplate.postForObject(url, values, String.class);
+        String result = restTemplate.postForObject(targetUrl, values, String.class);
 
         ObjectMapper mapper = new ObjectMapper();
         Movement movement = null;
@@ -283,10 +298,11 @@ public class MainActivity extends ActionBarActivity {
         values.add("movement_id", movement_id.toString());
         values.add("comment", comment);
 
-        String url = getResources().getString(R.string.url) + "/records";
+        String baseUrl = getResources().getString(R.string.url) + "/records";
+        URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-        String result = restTemplate.postForObject(url, values, String.class);
+        String result = restTemplate.postForObject(targetUrl, values, String.class);
 
         ObjectMapper mapper = new ObjectMapper();
         Record record = null;
@@ -311,5 +327,29 @@ public class MainActivity extends ActionBarActivity {
             buffer.append(Integer.toString(b & 0xff));
         }
         return buffer.toString();
+    }
+
+    public Boolean loginCheck(){
+        SharedPreferences settings = getSharedPreferences(PREFERENCES_FILE_NAME, 0); // 0 -> MODE_PRIVATE
+        if(settings == null) return false;
+        String token = settings.getString("authentication_token","");
+        if(token != "") return true;
+        else return false;
+    }
+
+    public String getToken(){
+        String token = new String();
+
+        SharedPreferences settings = getSharedPreferences(PREFERENCES_FILE_NAME, 0); // 0 -> MODE_PRIVATE
+        token = settings.getString("authentication_token","").replace("\"","");
+        return token;
+    }
+
+    public URI getUrlWithToken(String baseUrl){
+        URI targetUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                .queryParam("access_token", getToken())
+                .build()
+                .toUri();
+        return targetUrl;
     }
 }
