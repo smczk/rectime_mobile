@@ -12,9 +12,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -25,6 +22,7 @@ import android.text.TextUtils;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,6 +35,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import smczk.rectime_mobile.R;
+import smczk.rectime_mobile.activities.adapters.CustomAdapter;
 import smczk.rectime_mobile.activities.models.Movement;
 import smczk.rectime_mobile.activities.models.Point;
 import smczk.rectime_mobile.activities.models.Record;
@@ -58,9 +57,22 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
+        //ListView rl = (ListView) findViewById(R.id.listView);
+        ListView list = (ListView) findViewById(R.id.listView);
+        ArrayList<String> textList = new ArrayList<String>();
+
+        for(int i=1; i<=20; i++){
+            textList.add("List item " + String.valueOf(i));
+        }
+
+        CustomAdapter mAdapter = new CustomAdapter(this, 0, textList);
+        list.setAdapter(mAdapter);
+        list.setDivider(null);
+/*
         WebView myWebView = (WebView)findViewById(R.id.webView);
         myWebView.setWebViewClient(new WebViewClient());
         myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
+*/
     }
 
     @Override
@@ -198,9 +210,11 @@ public class MainActivity extends Activity {
                 finishMovement(movement.id);
             }
         }
+/*
         WebView myWebView = (WebView)findViewById(R.id.webView);
         myWebView.setWebViewClient(new WebViewClient());
         myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
+*/
     }
 
     public Point isPointRegistered(Integer user_id, String extra_id) {
