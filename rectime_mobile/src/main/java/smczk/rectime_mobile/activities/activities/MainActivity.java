@@ -1,20 +1,22 @@
 package smczk.rectime_mobile.activities.activities;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.StrictMode;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.nfc.*;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -39,7 +41,7 @@ import smczk.rectime_mobile.activities.models.Movement;
 import smczk.rectime_mobile.activities.models.Point;
 import smczk.rectime_mobile.activities.models.Record;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
 
     private NfcAdapter mNfcAdapter;
     private RestTemplate restTemplate = new RestTemplate();
@@ -49,11 +51,16 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(!loginCheck()){
+        if (!loginCheck()) {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             startActivity(intent);
         }
 
+        setContentView(R.layout.activity_main);
+
+        WebView myWebView = (WebView)findViewById(R.id.webView);
+        myWebView.setWebViewClient(new WebViewClient());
+        myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
     }
 
     @Override
@@ -113,6 +120,7 @@ public class MainActivity extends ActionBarActivity {
                 }
         };
         mNfcAdapter.enableForegroundDispatch(this, pendingIntent, intentFilter, techList);
+
     }
 
     @Override
@@ -190,6 +198,9 @@ public class MainActivity extends ActionBarActivity {
                 finishMovement(movement.id);
             }
         }
+        WebView myWebView = (WebView)findViewById(R.id.webView);
+        myWebView.setWebViewClient(new WebViewClient());
+        myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
     }
 
     public Point isPointRegistered(Integer user_id, String extra_id) {

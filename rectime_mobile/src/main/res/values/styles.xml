@@ -1,8 +1,8 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat">
-        <!-- Customize your theme here. -->
-    </style>
+        <!-- your theme inherits from the material theme -->
+        <style name="AppTheme" parent="android:Theme.NoTitleBar">
+            <!-- theme customizations -->
+        </style>
 
 </resources>
