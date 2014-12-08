@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@android:style/Theme.NoTitleBar" >
         <activity
-            android:name="smczk.rectime_mobile.activities.activities.MainActivity"
+            android:name="smczk.rectime_mobile.activities.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait" >
@@ -39,7 +39,7 @@
                 android:resource="@xml/nfc_tech_filter" />
         </activity>
         <activity
-            android:name="smczk.rectime_mobile.activities.activities.LoginActivity"
+            android:name="smczk.rectime_mobile.activities.LoginActivity"
             android:label="@string/title_activity_login"
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
