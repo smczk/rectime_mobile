@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.nfc.*;
@@ -23,6 +24,7 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -57,14 +59,29 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        //ListView rl = (ListView) findViewById(R.id.listView);
         ListView list = (ListView) findViewById(R.id.listView);
         ArrayList<String> textList = new ArrayList<String>();
 
+        GetUserMovementAsync task = new GetUserMovementAsync();
+        task.execute();
+
+        Movement[] movements = new Movement[0];
+        try {
+            movements = task.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        for(int i=0; i<movements.length; i++){
+            textList.add("List item " + String.valueOf(movements[i].id));
+        }
+/*
         for(int i=1; i<=20; i++){
             textList.add("List item " + String.valueOf(i));
         }
-
+*/
         CustomAdapter mAdapter = new CustomAdapter(this, 0, textList);
         list.setAdapter(mAdapter);
         list.setDivider(null);
@@ -376,5 +393,26 @@ public class MainActivity extends Activity {
                 .build()
                 .toUri();
         return targetUrl;
+    }
+
+    private class GetUserMovementAsync extends AsyncTask<Void, Long, Movement[]> {
+
+        public void GetUserMovementAsync() {
+
+        }
+
+        @Override
+        protected Movement[] doInBackground(Void... params) {
+
+            String baseUrl = getResources().getString(R.string.api_url) + "/movements";
+            URI targetUrl = getUrlWithToken(baseUrl);
+
+            restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+            Movement[] movements = restTemplate.getForObject(targetUrl, Movement[].class);
+
+            return movements;
+
+        }
+
     }
 }
