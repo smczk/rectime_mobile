@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
 
     public Point isPointRegistered(Integer user_id, String extra_id) {
 
-        String baseUrl = getResources().getString(R.string.url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
+        String baseUrl = getResources().getString(R.string.api_url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -233,7 +233,7 @@ public class MainActivity extends Activity {
 
     public Movement latestMovement(Integer user_id) {
 
-        String baseUrl = getResources().getString(R.string.url) + "/movements" + "/" + user_id.toString() + "/latest";
+        String baseUrl = getResources().getString(R.string.api_url) + "/movements" + "/" + user_id.toString() + "/latest";
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -251,7 +251,7 @@ public class MainActivity extends Activity {
         values.add("movement_id", movement_id.toString());
         values.add("completed", "true");
 
-        String baseUrl = getResources().getString(R.string.url) + "/movements" + "/" + movement_id.toString();
+        String baseUrl = getResources().getString(R.string.api_url) + "/movements" + "/" + movement_id.toString();
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -279,7 +279,7 @@ public class MainActivity extends Activity {
         values.add("extra_id", extra_id);
         values.add("name", name);
 
-        String baseUrl = getResources().getString(R.string.url) + "/points";
+        String baseUrl = getResources().getString(R.string.api_url) + "/points";
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -300,7 +300,7 @@ public class MainActivity extends Activity {
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
         values.add("user_id", user_id.toString());
 
-        String baseUrl = getResources().getString(R.string.url) + "/movements";
+        String baseUrl = getResources().getString(R.string.api_url) + "/movements";
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -323,7 +323,7 @@ public class MainActivity extends Activity {
         values.add("movement_id", movement_id.toString());
         values.add("comment", comment);
 
-        String baseUrl = getResources().getString(R.string.url) + "/records";
+        String baseUrl = getResources().getString(R.string.api_url) + "/records";
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
