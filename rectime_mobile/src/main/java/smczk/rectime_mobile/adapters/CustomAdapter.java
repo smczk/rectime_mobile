@@ -12,15 +12,16 @@ import java.util.ArrayList;
 
 import smczk.rectime_mobile.R;
 
-public class CustomAdapter extends ArrayAdapter<String> {
+public class CustomAdapter extends ArrayAdapter<ArrayList<String>> {
 
     static class ViewHolder {
-        TextView text;
+        TextView text1;
+        TextView text2;
     }
 
     private LayoutInflater inflater;
 
-    public CustomAdapter(Context context, int textViewResourceId, ArrayList<String> textList) {
+    public CustomAdapter(Context context, int textViewResourceId, ArrayList<ArrayList<String>> textList) {
         super(context, textViewResourceId, textList);
     }
 
@@ -33,18 +34,23 @@ public class CustomAdapter extends ArrayAdapter<String> {
         if (view == null) {
             inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = inflater.inflate(R.layout.row, null);
-            TextView label = (TextView)view.findViewById(R.id.row);
+            TextView label1 = (TextView)view.findViewById(R.id.row1);
+            TextView label2 = (TextView)view.findViewById(R.id.row2);
             holder = new ViewHolder();
-            holder.text = label;
+            holder.text1 = label1;
+            holder.text2 = label2;
             view.setTag(holder);
         } else {
             holder = (ViewHolder) view.getTag();
         }
 
-        String str = getItem(position);
+        ArrayList ary = getItem(position);
+        String str1 = ary.get(0).toString();
+        String str2 = ary.get(1).toString();
 
-        if (!TextUtils.isEmpty(str)) {
-            holder.text.setText(str);
+        if (!TextUtils.isEmpty(str1) && !TextUtils.isEmpty(str2)) {
+            holder.text1.setText(str1);
+            holder.text2.setText(str2);
         }
 
         return view;

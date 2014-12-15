@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.nfc.*;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,8 +25,10 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -60,36 +63,44 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         ListView list = (ListView) findViewById(R.id.listView);
+        ArrayList<ArrayList<String>> displayList = new ArrayList<ArrayList<String>>();
         ArrayList<String> textList = new ArrayList<String>();
 
         GetUserMovementAsync task = new GetUserMovementAsync();
         task.execute();
 
-        Movement[] movements = new Movement[0];
+        String response = new String();
         try {
-            movements = task.get();
+            response = task.get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
 
-        for(int i=0; i<movements.length; i++){
-            textList.add("List item " + String.valueOf(movements[i].id));
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            JsonNode root = mapper.readValue(response, JsonNode.class);
+            for(int i=0; i<root.size(); i++){
+                JsonNode movementNode = root.get(i);
+                JsonNode movement = movementNode.get("movement");
+
+                JsonNode recordNode = movement.get("record");
+
+                    for(int k=0; k<recordNode.size(); k++){
+                        JsonNode record = recordNode.get(k);
+                        textList.add(String.valueOf(record.get("comment")));
+                        textList.add(String.valueOf(record.get("point").get("name")));
+                }
+                displayList.add(textList);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-/*
-        for(int i=1; i<=20; i++){
-            textList.add("List item " + String.valueOf(i));
-        }
-*/
-        CustomAdapter mAdapter = new CustomAdapter(this, 0, textList);
+        CustomAdapter mAdapter = new CustomAdapter(this, 0, displayList);
         list.setAdapter(mAdapter);
         list.setDivider(null);
-/*
-        WebView myWebView = (WebView)findViewById(R.id.webView);
-        myWebView.setWebViewClient(new WebViewClient());
-        myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
-*/
     }
 
     @Override
@@ -395,22 +406,22 @@ public class MainActivity extends Activity {
         return targetUrl;
     }
 
-    private class GetUserMovementAsync extends AsyncTask<Void, Long, Movement[]> {
+    private class GetUserMovementAsync extends AsyncTask<Void, Long, String> {
 
         public void GetUserMovementAsync() {
 
         }
 
         @Override
-        protected Movement[] doInBackground(Void... params) {
+        protected String doInBackground(Void... params) {
 
             String baseUrl = getResources().getString(R.string.api_url) + "/movements";
             URI targetUrl = getUrlWithToken(baseUrl);
 
             restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
-            Movement[] movements = restTemplate.getForObject(targetUrl, Movement[].class);
+            String response = restTemplate.getForObject(targetUrl, String.class);
 
-            return movements;
+            return response;
 
         }
 
