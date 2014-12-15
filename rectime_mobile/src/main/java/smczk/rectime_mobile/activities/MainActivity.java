@@ -8,7 +8,6 @@ import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.nfc.*;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +24,6 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -184,17 +182,15 @@ public class MainActivity extends Activity {
         }
 
         byte[] rawId = intent.getByteArrayExtra(NfcAdapter.EXTRA_ID);
-        //String id = "nothing";
 
         final String extra_id = bytesToString(rawId);
-        final Integer user_id = 1;
 
         Toast.makeText(getApplicationContext(), extra_id, Toast.LENGTH_SHORT).show();
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
 
-        Point point = isPointRegistered(user_id, extra_id);
+        Point point = isPointRegistered(extra_id);
         if(point.id.equals(0)) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Register New point");
@@ -208,10 +204,10 @@ public class MainActivity extends Activity {
                     EditText input = (EditText)layout.findViewById(R.id.edittext);
 
                     if(input.getText().toString() != null) {
-                        Point point = registerNewPoint(user_id, extra_id, input.getText().toString());
-                        Movement movement = latestMovement(user_id);
+                        Point point = registerNewPoint(extra_id, input.getText().toString());
+                        Movement movement = latestMovement();
                         if(movement.id.equals(0)) {
-                            movement = registerNewMovement(user_id);
+                            movement = registerNewMovement();
                             Record record = registerNewRecord(point.id, movement.id, "comment");
                         }else{
                             Record record = registerNewRecord(point.id, movement.id, "comment");
@@ -229,9 +225,9 @@ public class MainActivity extends Activity {
             builder.create().show();
 
         }else{
-            Movement movement = latestMovement(user_id);
+            Movement movement = latestMovement();
             if(movement.id.equals(0)){
-                movement = registerNewMovement(user_id);
+                movement = registerNewMovement();
                 Record record = registerNewRecord(point.id, movement.id, "comment");
             }else{
                 Record record = registerNewRecord(point.id, movement.id, "comment");
@@ -245,9 +241,9 @@ public class MainActivity extends Activity {
 */
     }
 
-    public Point isPointRegistered(Integer user_id, String extra_id) {
+    public Point isPointRegistered(String extra_id) {
 
-        String baseUrl = getResources().getString(R.string.api_url) + "/points" + "/" + user_id.toString() + "/" + extra_id;
+        String baseUrl = getResources().getString(R.string.api_url) + "/points" + "/" + extra_id;
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -259,9 +255,9 @@ public class MainActivity extends Activity {
         return new Point();
     }
 
-    public Movement latestMovement(Integer user_id) {
+    public Movement latestMovement() {
 
-        String baseUrl = getResources().getString(R.string.api_url) + "/movements" + "/" + user_id.toString() + "/latest";
+        String baseUrl = getResources().getString(R.string.api_url) + "/movements" + "/latest";
         URI targetUrl = getUrlWithToken(baseUrl);
 
         restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
@@ -300,10 +296,9 @@ public class MainActivity extends Activity {
         return movement;
     }
 
-    public Point registerNewPoint(Integer user_id, String extra_id, String name) {
+    public Point registerNewPoint(String extra_id, String name) {
 
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
-        values.add("user_id", user_id.toString());
         values.add("extra_id", extra_id);
         values.add("name", name);
 
@@ -323,10 +318,9 @@ public class MainActivity extends Activity {
         return point;
     }
 
-    public Movement registerNewMovement(Integer user_id) {
+    public Movement registerNewMovement() {
 
         MultiValueMap<String, Object> values = new LinkedMultiValueMap<String, Object>();
-        values.add("user_id", user_id.toString());
 
         String baseUrl = getResources().getString(R.string.api_url) + "/movements";
         URI targetUrl = getUrlWithToken(baseUrl);
