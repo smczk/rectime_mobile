@@ -99,6 +99,7 @@ public class MainActivity extends Activity {
         CustomAdapter mAdapter = new CustomAdapter(this, 0, displayList);
         list.setAdapter(mAdapter);
         list.setDivider(null);
+
     }
 
     @Override
