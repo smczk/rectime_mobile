@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.ContentResolver;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -344,6 +345,13 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor>{
             showProgress(false);
 
             if (success) {
+                Intent data = new Intent();
+                Bundle bundle = new Bundle();
+                bundle.putString("key.StringData", "送り返す文字列");
+                bundle.putInt("key.intData", 123456789);
+                data.putExtras(bundle);
+
+                setResult(RESULT_OK, data);
                 finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
