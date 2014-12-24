@@ -57,7 +57,6 @@ public class MovementActivity extends Activity {
 
         ListView list = (ListView) findViewById(R.id.listView);
         ArrayList<ArrayList<String>> displayList = new ArrayList<ArrayList<String>>();
-        ArrayList<String> textList = new ArrayList<String>();
 
         GetUserMovementAsync task = new GetUserMovementAsync();
         task.execute();
@@ -75,9 +74,9 @@ public class MovementActivity extends Activity {
         try {
             JsonNode root = mapper.readValue(response, JsonNode.class);
             for(int i=0; i<root.size(); i++){
+                ArrayList<String> textList = new ArrayList<String>();
                 JsonNode movementNode = root.get(i);
                 JsonNode movement = movementNode.get("movement");
-
                 JsonNode recordNode = movement.get("record");
 
                 for(int k=0; k<recordNode.size(); k++){
@@ -230,11 +229,6 @@ public class MovementActivity extends Activity {
                 finishMovement(movement.id);
             }
         }
-/*
-        WebView myWebView = (WebView)findViewById(R.id.webView);
-        myWebView.setWebViewClient(new WebViewClient());
-        myWebView.loadUrl("https://mysterious-retreat-9693.herokuapp.com");
-*/
     }
 
     public Point isPointRegistered(String extra_id) {
