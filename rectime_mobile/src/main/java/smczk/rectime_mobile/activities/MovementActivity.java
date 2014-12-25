@@ -73,7 +73,7 @@ public class MovementActivity extends Activity {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readValue(response, JsonNode.class);
-            for(int i=0; i<root.size(); i++){
+            for(int i=root.size()-1; i>0; i--){
                 ArrayList<String> textList = new ArrayList<String>();
                 JsonNode movementNode = root.get(i);
                 JsonNode movement = movementNode.get("movement");
@@ -81,7 +81,7 @@ public class MovementActivity extends Activity {
 
                 for(int k=0; k<recordNode.size(); k++){
                     JsonNode record = recordNode.get(k);
-                    textList.add(String.valueOf(record.get("comment")));
+                    textList.add(String.valueOf(record.get("updated_at")));
                     textList.add(String.valueOf(record.get("point").get("name")));
                 }
                 displayList.add(textList);

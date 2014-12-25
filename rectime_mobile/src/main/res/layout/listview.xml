@@ -4,5 +4,7 @@
     android:layout_height="match_parent"
     android:background="#ffffff"
     android:id="@+id/list"
-    android:clickable="false" >
+    android:clickable="false"
+    android:dividerHeight="1sp"
+    android:divider="#000000" >
 </ListView>
